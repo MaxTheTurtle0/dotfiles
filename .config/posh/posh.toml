@@ -1,0 +1,60 @@
+"$schema" = "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json"
+final_space = true
+version = 2
+
+[[blocks]]
+alignment = "left"
+type = "prompt"
+
+  [[blocks.segments]]
+  foreground = "#98C379"
+  style = "plain"
+  template = "➜"
+  type = "text"
+
+  [[blocks.segments]]
+  foreground = "#56B6C2"
+  style = "plain"
+  template = " {{ .Path }}"
+  type = "path"
+
+    [blocks.segments.properties]
+    style = "full"
+
+  [[blocks.segments]]
+  foreground = "#D0666F"
+  style = "plain"
+  template = " <#5FAAE8>git:(</>{{ .HEAD }}{{ if or (.Working.Changed) (.Staging.Changed) }}*{{ end }}{{ if gt .Behind 0 }}⇣{{ end }}{{ if gt .Ahead 0 }}⇡{{ end }}</><#5FAAE8>)</>"
+  type = "git"
+
+    [blocks.segments.properties]
+    branch_icon = ""
+    commit_icon = '@'
+    fetch_status = true
+
+  [[blocks.segments]]
+  foreground = "#BF616A"
+  style = "plain"
+  template = " ✗"
+  type = "status"
+
+
+[[blocks]]
+  type = 'rprompt'
+  overflow = 'hidden'
+
+  [[blocks.segments]]
+    type = 'executiontime'
+    style = 'plain'
+    foreground = 'yellow'
+    background = 'transparent'
+    template = '{{ .FormattedMs }}'
+
+    [blocks.segments.properties]
+      threshold = 5000
+
+
+[transient_prompt]
+  foreground = "#98C379"
+  background = 'transparent'
+  template = "➜ "
