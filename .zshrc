@@ -59,11 +59,11 @@ export NVM_DIR="$HOME/.nvm"
 BUN_INSTALL="$HOME/.bun"
 export PATH=$BUN_INSTALL/bin:$PATH
 
-export ANDROID_HOME=$HOME/android_sdk
-
-export PATH=$PATH:/usr/local/go/bin
-
-export PATH=$PATH:$HOME/android_sdk/cmdline-tools/bin
+if [[ "$(uname)" != "Darwin" ]]; then
+    export ANDROID_HOME=$HOME/android_sdk
+    export PATH=$PATH:/usr/local/go/bin
+    export PATH=$PATH:$HOME/android_sdk/cmdline-tools/bin
+fi
 
 # Turso
 export PATH="/home/maxtheturtle0/.turso:$PATH"
@@ -77,3 +77,6 @@ eval "$(zoxide init --cmd cd zsh)"
 source <(fzf --zsh)
 
 bindkey '^I' autosuggest-accept
+
+# bun completions
+[ -s "/Users/maxtheturtle0/.bun/_bun" ] && source "/Users/maxtheturtle0/.bun/_bun"
