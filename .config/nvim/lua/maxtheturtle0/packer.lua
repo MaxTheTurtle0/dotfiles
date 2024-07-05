@@ -14,9 +14,9 @@ if not ok then return end
 vim.cmd [[packadd packer.nvim]] 
 
 return packer.startup(function(use) -- Packer can manage itself 
-    use 'wbthomason/packer.nvim' 
-    use 'ThePrimeagen/vim-be-good' 
-    use 'folke/tokyonight.nvim' 
+    use 'wbthomason/packer.nvim'
+    use 'ThePrimeagen/vim-be-good'
+    use 'folke/tokyonight.nvim'
     use 'github/copilot.vim'
     use 'christoomey/vim-tmux-navigator'
     use {
@@ -34,7 +34,7 @@ return packer.startup(function(use) -- Packer can manage itself
                 -- refer to the configuration section below
             }
         end
-    }) 
+    })
     use {
         'VonHeikemen/lsp-zero.nvim',
         branch = 'v2.x',
@@ -50,6 +50,7 @@ return packer.startup(function(use) -- Packer can manage itself
             {'L3MON4D3/LuaSnip'},     -- Required 
         }
     }
+    use 'fatih/vim-go'
     use "supermaven-inc/supermaven-nvim"
     use 'theprimeagen/harpoon'
     use 'mbbill/undotree'
