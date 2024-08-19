@@ -17,7 +17,7 @@ return packer.startup(function(use) -- Packer can manage itself
     use 'wbthomason/packer.nvim'
     use 'ThePrimeagen/vim-be-good'
     use 'folke/tokyonight.nvim'
-    use 'github/copilot.vim'
+    --use 'github/copilot.vim'
     use 'christoomey/vim-tmux-navigator'
     use {
         'nvim-telescope/telescope.nvim', tag = '0.1.2',
@@ -51,7 +51,7 @@ return packer.startup(function(use) -- Packer can manage itself
         }
     }
     use 'fatih/vim-go'
-    use "supermaven-inc/supermaven-nvim"
+    --use "supermaven-inc/supermaven-nvim"
     use 'theprimeagen/harpoon'
     use 'mbbill/undotree'
 end)
