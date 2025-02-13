@@ -10,4 +10,14 @@ vim.opt.smartindent = true
 
 vim.opt.termguicolors = true
 
+-- Set up persistent undo
+vim.opt.undodir = os.getenv("HOME") .. "/.undodir"
+vim.opt.undofile = true
+
+-- Create the undodir if it doesn't exist
+local undodir = vim.fn.expand(vim.opt.undodir:get()[1])
+if vim.fn.isdirectory(undodir) == 0 then
+    vim.fn.mkdir(undodir, "p")
+end
+
 vim.opt.scrolloff = 8
