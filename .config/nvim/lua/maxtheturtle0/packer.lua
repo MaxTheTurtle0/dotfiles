@@ -7,51 +7,54 @@ if fn.empty(fn.glob(install_path)) > 0 then
     vim.api.nvim_command 'packadd packer.nvim'
 end
 
--- don't throw any error on first use by packer
 local ok, packer = pcall(require, "packer")
 if not ok then return end
 
 vim.cmd [[packadd packer.nvim]] 
 
-return packer.startup(function(use) -- Packer can manage itself 
+return packer.startup(function(use)
+    -- Packer can manage itself 
     use 'wbthomason/packer.nvim'
     use 'ThePrimeagen/vim-be-good'
     use 'folke/tokyonight.nvim'
-    --use 'github/copilot.vim'
+    -- use 'github/copilot.vim'
     use 'christoomey/vim-tmux-navigator'
+
+    -- Telescope and its dependencies
     use {
-        'nvim-telescope/telescope.nvim', tag = '0.1.2',
-        -- or                            , branch = '0.1.x',
+        'nvim-telescope/telescope.nvim', tag = '0.1.8',
         requires = { {'nvim-lua/plenary.nvim'} }
     }
+    -- Fzf-native extension for Telescope
+    use {
+        'nvim-telescope/telescope-fzf-native.nvim',
+        run = 'make',
+        cond = vim.fn.executable('make') == 1
+    }
+
     use ('nvim-treesitter/nvim-treesitter', {run = ':TSUpdate'})
+
     use({
         "folke/trouble.nvim",
         config = function()
-            require("trouble").setup {
-                -- your configuration comes here
-                -- or leave it empty to use the default settings
-                -- refer to the configuration section below
-            }
+            require("trouble").setup {}
         end
     })
+
     use {
         'VonHeikemen/lsp-zero.nvim',
         branch = 'v2.x',
         requires = {
-            -- LSP Support
-            {'neovim/nvim-lspconfig'},             -- Required
-            {'williamboman/mason.nvim'},           -- Optional
-            {'williamboman/mason-lspconfig.nvim'}, -- Optional
-
-            -- Autocompletion
-            {'hrsh7th/nvim-cmp'},     -- Required
-            {'hrsh7th/cmp-nvim-lsp'}, -- Required
-            {'L3MON4D3/LuaSnip'},     -- Required 
+            {'neovim/nvim-lspconfig'},
+            {'williamboman/mason.nvim'},
+            {'williamboman/mason-lspconfig.nvim'},
+            {'hrsh7th/nvim-cmp'},
+            {'hrsh7th/cmp-nvim-lsp'},
+            {'L3MON4D3/LuaSnip'},
         }
     }
+
     use 'fatih/vim-go'
-    --use "supermaven-inc/supermaven-nvim"
     use 'theprimeagen/harpoon'
     use 'mbbill/undotree'
 end)
