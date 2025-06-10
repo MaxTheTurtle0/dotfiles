@@ -57,4 +57,12 @@ return packer.startup(function(use)
     use 'fatih/vim-go'
     use 'theprimeagen/harpoon'
     use 'mbbill/undotree'
+
+    use {
+        'lewis6991/gitsigns.nvim',
+        config = function()
+            require('gitsigns').setup()
+        end
+    }
+
 end)
