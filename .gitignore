@@ -1,6 +1,7 @@
 
 # Ignore compiled nvim files
 /.config/nvim/plugin
+/.config/nvim/lazy-lock.json
 
 # Ignore tmux plugin manager files
 /.config/tmux/plugins

@@ -1,1 +1,1 @@
-require("maxtheturtle0")
+require("config.lazy")
