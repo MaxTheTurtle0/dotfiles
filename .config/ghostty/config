@@ -1,0 +1,3 @@
+cursor-style=block
+shell-integration-features = no-cursor
+keybind = shift+enter=text:\n
