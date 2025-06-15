@@ -60,14 +60,27 @@ export NVM_DIR="$HOME/.nvm"
 BUN_INSTALL="$HOME/.bun"
 export PATH=$BUN_INSTALL/bin:$PATH
 
+# mac only
 if [[ "$(uname)" != "Darwin" ]]; then
     export ANDROID_HOME=$HOME/android_sdk
     export PATH=$PATH:/usr/local/go/bin
     export PATH=$PATH:$HOME/android_sdk/cmdline-tools/bin
-fi
+    export ANDROID_HOME=~/Library/Android/sdk
+    export PATH=$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
 
-# Turso
-export PATH="/home/maxtheturtle0/.turso:$PATH"
+    # Turso
+    export PATH="/home/maxtheturtle0/.turso:$PATH"
+
+    # The following lines have been added by Docker Desktop to enable Docker CLI completions.
+    fpath=(/Users/maxtheturtle0/.docker/completions $fpath)
+    export DYLD_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_LIBRARY_PATH
+    export LIBRARY_PATH=/opt/homebrew/lib:$LIBRARY_PATH
+    export PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH
+
+    # bun completions
+    [ -s "/Users/maxtheturtle0/.bun/_bun" ] && source "/Users/maxtheturtle0/.bun/_bun"
+    export PATH=$PATH:/Users/maxtheturtle0/Downloads/platform-tools
+fi
 
 export PATH="/snap/bin:$PATH"
 
@@ -79,7 +92,15 @@ source <(fzf --zsh)
 
 bindkey '^I' autosuggest-accept
 
-# bun completions
-[ -s "/Users/maxtheturtle0/.bun/_bun" ] && source "/Users/maxtheturtle0/.bun/_bun"
-
 export XDG_CONFIG_HOME="$HOME/dotfiles/.config"
+
+# Pyenv configuration
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+if command -v pyenv 1>/dev/null 2>&1; then
+    eval "$(pyenv init --path)"
+    eval "$(pyenv init -)"
+fi
+
+autoload -Uz compinit
+compinit
