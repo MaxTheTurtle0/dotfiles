@@ -1,17 +1,17 @@
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
-  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
-  if vim.v.shell_error ~= 0 then
-    vim.api.nvim_echo({
-      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
-      { out, "WarningMsg" },
-      { "\nPress any key to exit..." },
-    }, true, {})
-    vim.fn.getchar()
-    os.exit(1)
-  end
+    local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+    local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+    if vim.v.shell_error ~= 0 then
+        vim.api.nvim_echo({
+            { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+            { out, "WarningMsg" },
+            { "\nPress any key to exit..." },
+        }, true, {})
+        vim.fn.getchar()
+        os.exit(1)
+    end
 end
 vim.opt.rtp:prepend(lazypath)
 
@@ -44,19 +44,7 @@ end
 
 vim.opt.scrolloff = 8
 
--- Keymaps: These are also generally fine to be defined upfront.
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
-
--- M.general seems like it's not being used, consider removing it if so.
--- local M = {}
--- M.general = {
---     n = {
---         ["<C-h>"] = { "<cmd> TmuxNavigateLeft<CR>", "window left" },
---         ["<C-l>"] = { "<cmd> TmuxNavigateRight<CR>", "window right" },
---         ["<C-j>"] = { "<cmd> TmuxNavigateDown<CR>", "window down" },
---         ["<C-k>"] = { "<cmd> TmuxNavigateUp<CR>", "window up" },
---     }
--- }
 
 vim.keymap.set(
     "n",
@@ -97,9 +85,6 @@ return require("lazy").setup({
         "folke/tokyonight.nvim",
         lazy = false,
         priority = 1000,
-        config = function()
-            vim.cmd("colorscheme tokyonight")
-        end,
     },
 
     -- vim-tmux-navigator:
@@ -146,14 +131,6 @@ return require("lazy").setup({
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
         event = { "BufReadPre", "BufNewFile" }, -- Load when reading/creating a buffer
-        config = function()
-            require("nvim-treesitter.configs").setup({
-                -- Your treesitter configurations here
-                ensure_installed = { "lua", "vim", "markdown", "go" }, -- Example languages
-                highlight = { enable = true },
-                indent = { enable = true },
-            })
-        end,
     },
 
     -- trouble.nvim:
@@ -161,9 +138,6 @@ return require("lazy").setup({
     {
         "folke/trouble.nvim",
         cmd = { "TroubleToggle", "Trouble" }, -- Load when Trouble commands are run
-        config = function()
-            require("trouble").setup {}
-        end,
     },
 
     -- lsp-zero.nvim:
@@ -172,68 +146,59 @@ return require("lazy").setup({
     -- (lspconfig, mason, cmp, luasnip).
     -- A common approach is to load LSP when opening a file (`BufReadPre`)
     -- or when inserting text (`InsertEnter`).
-    {
-        "VonHeikemen/lsp-zero.nvim",
-        branch = "v2.x",
-        event = { "BufReadPre", "BufNewFile", "BufEnter" }, -- Load when entering/reading a buffer
-        dependencies = {
-            "neovim/nvim-lspconfig",
-            "williamboman/mason.nvim",
-            "williamboman/mason-lspconfig.nvim",
-            "hrsh7th/nvim-cmp",
-            "hrsh7th/cmp-nvim-lsp",
-            "L3MON4D3/LuaSnip",
+    --
+    --
+    --{
+        -- Autocompletion 
+        {
+            'VonHeikemen/lsp-zero.nvim',
+            branch = 'v3.x', -- important: this activates v3
+            dependencies = {
+                -- LSP Support
+                'neovim/nvim-lspconfig',
+                'williamboman/mason.nvim',
+                'williamboman/mason-lspconfig.nvim',
+
+                -- Autocompletion
+                'hrsh7th/nvim-cmp',
+                'hrsh7th/cmp-nvim-lsp',
+                'L3MON4D3/LuaSnip',
+            }
         },
-        config = function()
-            -- Minimal setup for lsp-zero. You would typically have more here.
-            local lsp = require("lsp-zero")
-            lsp.setup()
-            -- Example: Enable keybindings for LSP
-            lsp.on_attach(function(client, bufnr)
-                lsp.defaults.cmp_mappings(vim.api.nvim_buf_set_keymap, bufnr)
-                lsp.defaults.lsp_mappings(vim.api.nvim_buf_set_keymap, bufnr)
-            end)
-        end,
-    },
 
-    -- vim-go:
-    -- Lazy-load for Go filetypes.
-    {
-        "fatih/vim-go",
-        ft = "go",
-    },
 
-    -- harpoon:
-    -- Lazy-load on its commands or keymaps.
-    {
-        "theprimeagen/harpoon",
-        cmd = { "Harpoon", "HarpoonAdd", "HarpoonMenu" },
-        keys = {
-            { "<leader>a", "<cmd>lua require('harpoon.mark').add_file()<CR>", desc = "Harpoon add file" },
-            { "<leader>q", "<cmd>lua require('harpoon.ui').toggle_quick_menu()<CR>", desc = "Harpoon toggle menu" },
+        -- vim-go:
+        -- Lazy-load for Go filetypes.
+        {
+            "fatih/vim-go",
+            ft = "go",
         },
-        config = function()
-            -- No specific setup needed for harpoon itself beyond keymaps if defined here.
-        end,
-    },
 
-    -- undotree:
-    -- Lazy-load on its command or keymap.
-    {
-        "mbbill/undotree",
-        cmd = "UndotreeToggle", -- Load when :UndotreeToggle is run
-        keys = { { "<leader>u", "<cmd>UndotreeToggle<CR>", desc = "Toggle Undotree" } },
-        -- No specific config needed as it's a Vim plugin.
-    },
+        -- harpoon:
+        -- Lazy-load on its commands or keymaps.
+        {
+            "theprimeagen/harpoon",
+            cmd = { "Harpoon", "HarpoonAdd", "HarpoonMenu" },
+            keys = {
+                { "<leader>a", "<cmd>lua require('harpoon.mark').add_file()<CR>", desc = "Harpoon add file" },
+                { "<leader>q", "<cmd>lua require('harpoon.ui').toggle_quick_menu()<CR>", desc = "Harpoon toggle menu" },
+            },
+        },
 
-    -- gitsigns.nvim:
-    -- Can be loaded on `BufReadPre` or `BufEnter` for immediate feedback
-    -- on git changes when opening a file.
-    {
-        "lewis6991/gitsigns.nvim",
-        event = { "BufReadPre", "BufEnter" },
-        config = function()
-            require("gitsigns").setup()
-        end,
-    },
-})
+        -- undotree:
+        -- Lazy-load on its command or keymap.
+        {
+            "mbbill/undotree",
+            cmd = "UndotreeToggle", -- Load when :UndotreeToggle is run
+            keys = { { "<leader>u", "<cmd>UndotreeToggle<CR>", desc = "Toggle Undotree" } },
+            -- No specific config needed as it's a Vim plugin.
+        },
+
+        -- gitsigns.nvim:
+        -- Can be loaded on `BufReadPre` or `BufEnter` for immediate feedback
+        -- on git changes when opening a file.
+        {
+            "lewis6991/gitsigns.nvim",
+            event = { "BufReadPre", "BufEnter" },
+        },
+    })
