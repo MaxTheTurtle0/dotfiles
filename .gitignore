@@ -5,3 +5,4 @@
 
 # Ignore tmux plugin manager files
 /.config/tmux/plugins
+/.config/go
