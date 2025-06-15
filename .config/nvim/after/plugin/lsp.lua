@@ -81,6 +81,3 @@ lspconfig.util.default_config.capabilities = vim.tbl_deep_extend(
   lspconfig.util.default_config.capabilities,
   require('cmp_nvim_lsp').default_capabilities()
 )
-
--- finally kick off the servers
-lsp.setup()
