@@ -81,3 +81,5 @@ bindkey '^I' autosuggest-accept
 
 # bun completions
 [ -s "/Users/maxtheturtle0/.bun/_bun" ] && source "/Users/maxtheturtle0/.bun/_bun"
+
+export XDG_CONFIG_HOME="$HOME/dotfiles/.config"
