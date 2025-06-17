@@ -60,11 +60,13 @@ export NVM_DIR="$HOME/.nvm"
 BUN_INSTALL="$HOME/.bun"
 export PATH=$BUN_INSTALL/bin:$PATH
 
+
+export ANDROID_HOME=$HOME/android_sdk
+export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:$HOME/android_sdk/cmdline-tools/bin
+
 # mac only
-if [[ "$(uname)" != "Darwin" ]]; then
-    export ANDROID_HOME=$HOME/android_sdk
-    export PATH=$PATH:/usr/local/go/bin
-    export PATH=$PATH:$HOME/android_sdk/cmdline-tools/bin
+if [[ "$(uname)" == "Darwin" ]]; then
     export ANDROID_HOME=~/Library/Android/sdk
     export PATH=$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
 
