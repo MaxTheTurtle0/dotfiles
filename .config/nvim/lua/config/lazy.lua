@@ -172,32 +172,206 @@ return require("lazy").setup({
         },
       },
     },
-    -- lsp-zero.nvim:
-    -- LSP setup is critical, but the components can be lazy-loaded.
-    -- `lsp-zero` itself often handles the lazy-loading of its dependencies
-    -- (lspconfig, mason, cmp, luasnip).
-    -- A common approach is to load LSP when opening a file (`BufReadPre`)
-    -- or when inserting text (`InsertEnter`).
-    --
-    --
-    --{
-        -- Autocompletion 
-        {
-            'VonHeikemen/lsp-zero.nvim',
-            branch = 'v3.x', -- important: this activates v3
-            dependencies = {
-                -- LSP Support
-                'neovim/nvim-lspconfig',
-                'williamboman/mason.nvim',
-                'williamboman/mason-lspconfig.nvim',
+    -- LSP, DAP, and Formatting
+{
+    -- Mason: The plugin that manages LSP servers, DAPs, linters, etc.
+    -- We load it on startup (`lazy = false`) to ensure the :Mason command
+    -- is always available.
+    'williamboman/mason.nvim',
+    lazy = false,
+    config = true, -- This just runs the default config for mason.
+},
+{
+    -- mason-lspconfig: The bridge between Mason and lspconfig.
+    -- It reads the servers you have installed with Mason and helps
+    -- lspconfig start them.
+    'williamboman/mason-lspconfig.nvim',
+    -- No need for lazy-loading triggers; it's a dependency of lspconfig.
+},
 
-                -- Autocompletion
-                'hrsh7th/nvim-cmp',
-                'hrsh7th/cmp-nvim-lsp',
-                'L3MON4D3/LuaSnip',
-            }
-        },
+-- Autocompletion Engine
+{
+    'hrsh7th/nvim-cmp',
+    event = 'InsertEnter', -- Load when you enter insert mode
+    dependencies = {
+        'hrsh7th/cmp-nvim-lsp', -- Source for LSP completions
+        'L3MON4D3/LuaSnip',     -- Snippet engine
+    },
+    config = function()
+        local cmp = require('cmp')
+        local luasnip = require('luasnip')
 
+        cmp.setup({
+            snippet = {
+                expand = function(args)
+                    luasnip.lsp_expand(args.body)
+                end,
+            },
+            -- Your custom window borders from your original config
+            window = {
+                completion = cmp.config.window.bordered(),
+                documentation = cmp.config.window.bordered(),
+            },
+            mapping = cmp.mapping.preset.insert({
+                ['<C-Space>'] = cmp.mapping.complete(),
+                ['<CR>'] = cmp.mapping.confirm({ select = true }),
+                ['<C-u>'] = cmp.mapping.scroll_docs(-4),
+                ['<C-d>'] = cmp.mapping.scroll_docs(4),
+            }),
+            -- Your sources from your original config
+            sources = {
+                { name = 'nvim_lsp' },
+                { name = 'luasnip' },
+            },
+        })
+    end,
+},
+
+-- The main LSP configuration driver
+{
+    'neovim/nvim-lspconfig',
+    event = { 'BufReadPre', 'BufNewFile' }, -- Load when you open a file
+    dependencies = {
+        'hrsh7th/cmp-nvim-lsp',
+        'williamboman/mason.nvim',
+        'williamboman/mason-lspconfig.nvim',
+    },
+    config = function()
+        -- THIS IS WHERE WE PUT YOUR CUSTOM CONFIGS
+
+        -- 1. Your custom floating preview with padding
+        do
+            local orig_open_floating_preview =
+                vim.lsp.util.open_floating_preview
+
+            vim.lsp.util.open_floating_preview = function(
+                contents,
+                syntax,
+                opts,
+                ...
+            )
+                opts = vim.tbl_extend(
+                    'force',
+                    { border = 'rounded' },
+                    opts or {}
+                )
+                if type(contents) == 'string' then
+                    contents = vim.split(contents, '\n', { plain = true })
+                end
+                table.insert(contents, 1, '')
+                table.insert(contents, '')
+                for i, line in ipairs(contents) do
+                    contents[i] = ' ' .. line .. ' '
+                end
+                return orig_open_floating_preview(
+                    contents,
+                    syntax,
+                    opts,
+                    ...
+                )
+            end
+        end
+
+        -- 2. Set up LSP capabilities to work with nvim-cmp
+        local capabilities =
+            require('cmp_nvim_lsp').default_capabilities()
+
+        -- 3. Your custom keymaps, placed inside the LspAttach autocommand
+        -- This is the best practice, as it only sets the keymaps for buffers
+        -- where an LSP server is actually running.
+        vim.api.nvim_create_autocmd('LspAttach', {
+            group = vim.api.nvim_create_augroup(
+                'UserLspConfig',
+                {}
+            ),
+            callback = function(ev)
+                local opts = { buffer = ev.buf, remap = false }
+                -- Your keymaps from after/plugin/lsp.lua
+                vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+                vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+                vim.keymap.set(
+                    'n',
+                    '<leader>vws',
+                    vim.lsp.buf.workspace_symbol,
+                    opts
+                )
+                vim.keymap.set(
+                    'n',
+                    '<leader>vd',
+                    vim.diagnostic.open_float,
+                    opts
+                )
+                vim.keymap.set(
+                    'n',
+                    '[d',
+                    vim.diagnostic.goto_next,
+                    opts
+                )
+                vim.keymap.set(
+                    'n',
+                    ']d',
+                    vim.diagnostic.goto_prev,
+                    opts
+                )
+                vim.keymap.set(
+                    'n',
+                    '<leader>vca',
+                    vim.lsp.buf.code_action,
+                    opts
+                )
+                vim.keymap.set(
+                    'n',
+                    '<leader>vrr',
+                    vim.lsp.buf.references,
+                    opts
+                )
+                vim.keymap.set(
+                    'n',
+                    '<leader>vrn',
+                    vim.lsp.buf.rename,
+                    opts
+                )
+                vim.keymap.set(
+                    'i',
+                    '<C-h>',
+                    vim.lsp.buf.signature_help,
+                    opts
+                )
+            end,
+        })
+
+        -- 4. Configure mason-lspconfig to set up servers
+        require('mason-lspconfig').setup({
+            -- A list of servers to automatically install if they're not already.
+            -- Example: ensure_installed = { "gopls", "lua_ls", "tsserver" }
+            ensure_installed = {},
+            handlers = {
+                -- The default handler for servers.
+                function(server_name)
+                    require('lspconfig')[server_name].setup({
+                        capabilities = capabilities,
+                    })
+                end,
+
+                -- You can add custom handlers for specific servers here.
+                -- For example, for gopls:
+                -- ["gopls"] = function()
+                --     require('lspconfig').gopls.setup({
+                --         capabilities = capabilities,
+                --         settings = {
+                --             gopls = {
+                --                 -- your custom settings
+                --             }
+                --         }
+                --     })
+                -- end,
+            },
+        })
+
+        -- Keep the signcolumn open to avoid width-jumps
+        vim.opt.signcolumn = 'yes'
+    end,
+},
 
         -- vim-go:
         -- Lazy-load for Go filetypes.
