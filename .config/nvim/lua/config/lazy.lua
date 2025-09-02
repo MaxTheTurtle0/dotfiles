@@ -36,6 +36,16 @@ vim.opt.termguicolors = true
 vim.opt.undodir = os.getenv("HOME") .. "/.undodir"
 vim.opt.undofile = true
 
+vim.keymap.set('n', '<leader>y', '"+y', opts)
+
+-- visual (and block visual) selection -> yank to + register
+vim.keymap.set('v', '<leader>y', '"+y', opts)
+-- or explicitly for visual-block too:
+vim.keymap.set('x', '<leader>y', '"+y', opts)
+
+-- convenience: yank whole line to clipboard
+vim.keymap.set('n', '<leader>Y', '"+yy', opts)
+
 -- Create the undodir if it doesn't exist
 local undodir = vim.fn.expand(vim.opt.undodir:get()[1])
 if vim.fn.isdirectory(undodir) == 0 then
