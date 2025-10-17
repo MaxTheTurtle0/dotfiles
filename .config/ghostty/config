@@ -1,3 +1,3 @@
 cursor-style=block
-shell-integration-features = no-cursor
+shell-integration-features = no-cursor,ssh-env
 keybind = shift+enter=text:\n
