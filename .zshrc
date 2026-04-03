@@ -10,7 +10,13 @@ fi
 # Source/Load Zinit
 source "${ZINIT_HOME}/zinit.zsh"
 
-eval "$(oh-my-posh init zsh --config $HOME/.config/posh/posh.toml)"
+# oh-my-posh: cache the init script, regenerate only when config changes
+_omp_cache="$HOME/.cache/oh-my-posh/init.zsh"
+_omp_config="$HOME/.config/posh/posh.toml"
+if [[ ! -f "$_omp_cache" || "$_omp_config" -nt "$_omp_cache" ]]; then
+    oh-my-posh init zsh --config "$_omp_config" > "$_omp_cache" 2>/dev/null
+fi
+source "$_omp_cache"
 
 # Add in plugins
 zinit light zsh-users/zsh-syntax-highlighting
@@ -19,13 +25,25 @@ zinit light Aloxaf/fzf-tab
 
 zinit snippet OMZP::git
 
-# Load completions
-autoload -U compinit && compinit
+# Load completions (rebuild cache only once per day)
+autoload -U compinit
+if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
+    compinit
+else
+    compinit -C
+fi
 
 bindkey '^ ' complete-word
 
 bindkey '^p' history-search-backward
 bindkey '^n' history-search-forward
+
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^x^e' edit-command-line
+export EDITOR=nvim
+
+bindkey '^u' undo
 
 HISTSIZE=5000
 HISTFILE=~/.zsh_history
@@ -49,12 +67,33 @@ alias ls='ls --color'
 alias c='clear'
 alias r='rm -rf'
 alias n='nvim'
-alias t='tmux'
+#alias t='tmux'
+alias cc='claude --dangerously-skip-permissions'
+alias ccr='claude --dangerously-skip-permissions --resume'
 
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# Lazy-load nvm: defers 530ms+ startup cost until first use
+export NVM_DIR="$HOME/dotfiles/.config/nvm"
+nvm() {
+    unfunction nvm node npm npx 2>/dev/null
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm "$@"
+}
+node() {
+    unfunction nvm node npm npx 2>/dev/null
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    node "$@"
+}
+npm() {
+    unfunction nvm node npm npx 2>/dev/null
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    npm "$@"
+}
+npx() {
+    unfunction nvm node npm npx 2>/dev/null
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    npx "$@"
+}
 
 # bun
 BUN_INSTALL="$HOME/.bun"
@@ -67,42 +106,60 @@ export PATH=$PATH:$HOME/android_sdk/cmdline-tools/bin
 
 # mac only
 if [[ "$(uname)" == "Darwin" ]]; then
-    export ANDROID_HOME=~/Library/Android/sdk
+    export ANDROID_HOME=$HOME/Library/Android/sdk
     export PATH=$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
 
     # Turso
-    export PATH="/home/maxtheturtle0/.turso:$PATH"
+    export PATH="$HOME/.turso:$PATH"
 
-    # The following lines have been added by Docker Desktop to enable Docker CLI completions.
-    fpath=(/Users/maxtheturtle0/.docker/completions $fpath)
+    # Docker CLI completions
+    fpath=($HOME/.docker/completions $fpath)
     export DYLD_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_LIBRARY_PATH
     export LIBRARY_PATH=/opt/homebrew/lib:$LIBRARY_PATH
     export PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH
 
     # bun completions
-    [ -s "/Users/maxtheturtle0/.bun/_bun" ] && source "/Users/maxtheturtle0/.bun/_bun"
-    export PATH=$PATH:/Users/maxtheturtle0/Downloads/platform-tools
+    [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 fi
-
-export PATH="/snap/bin:$PATH"
 
 export PATH="$HOME/.local/bin:$PATH"
 
-eval "$(zoxide init --cmd cd zsh)"
+# zoxide + fzf: cache init scripts, regenerate when binaries update
+_cache_dir="$HOME/.cache/zsh"
+[[ -d "$_cache_dir" ]] || mkdir -p "$_cache_dir"
 
-source <(fzf --zsh)
+_zoxide_bin="$(whence -p zoxide)"
+if [[ ! -f "$_cache_dir/zoxide.zsh" || "$_zoxide_bin" -nt "$_cache_dir/zoxide.zsh" ]]; then
+    zoxide init --cmd cd zsh > "$_cache_dir/zoxide.zsh"
+fi
+source "$_cache_dir/zoxide.zsh"
+
+_fzf_bin="$(whence -p fzf)"
+if [[ ! -f "$_cache_dir/fzf.zsh" || "$_fzf_bin" -nt "$_cache_dir/fzf.zsh" ]]; then
+    fzf --zsh > "$_cache_dir/fzf.zsh"
+fi
+source "$_cache_dir/fzf.zsh"
 
 bindkey '^I' autosuggest-accept
 
 export XDG_CONFIG_HOME="$HOME/dotfiles/.config"
 
-# Pyenv configuration
+# Pyenv — lazy-loaded (no versions currently installed)
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
-if command -v pyenv 1>/dev/null 2>&1; then
-    eval "$(pyenv init --path)"
-    eval "$(pyenv init -)"
-fi
+pyenv() {
+    unfunction pyenv 2>/dev/null
+    eval "$(command pyenv init --path)"
+    eval "$(command pyenv init -)"
+    pyenv "$@"
+}
 
-autoload -Uz compinit
-compinit
+export OPENCODE_CONFIG_DIR=/Users/andrei.antonescu/.config/opencode/
+
+# Load Angular CLI autocompletion.
+#source <(ng completion script)
+
+. "$HOME/.posthog/env"
+
+# Nebius CLI (inlined)
+export PATH="$HOME/.nebius/bin:$PATH"
