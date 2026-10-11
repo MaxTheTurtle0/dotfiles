@@ -3,9 +3,21 @@
 .config/iterm2/
 .config/ruff/
 
-# Ignore compiled nvim files
-.config/nvim/plugin
-.config/nvim/lazy-lock.json
+# Machine-local shell settings and macOS metadata
+.zshrc.local
+.DS_Store
 
-# Ignore tmux plugin manager files
-.config/tmux/plugins
+# Generated application data and local configuration
+.config/.android/
+.config/.semgrep/
+.config/configstore/
+.config/helm/
+.config/homebrew/
+.config/miloctl/
+.config/ngrok/
+.config/nvm/
+.config/op/
+.config/opencode/
+.config/posthog-cli/
+.config/swiftpm/
+.config/uv/
