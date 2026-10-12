@@ -10,13 +10,30 @@ fi
 # Source/Load Zinit
 source "${ZINIT_HOME}/zinit.zsh"
 
-# oh-my-posh: cache the init script, regenerate only when config changes
+# Replace cached init scripts only after successful generation
+_dotfiles_write_init_cache() {
+    local cache_file="$1"
+    shift
+    local cache_tmp="${cache_file}.$$"
+    mkdir -p "${cache_file:h}" || return
+    if "$@" > "$cache_tmp"; then
+        mv -f "$cache_tmp" "$cache_file"
+    else
+        rm -f "$cache_tmp"
+        return 1
+    fi
+}
+
+# oh-my-posh: regenerate when the config or binary changes
 _omp_cache="$HOME/.cache/oh-my-posh/init.zsh"
 _omp_config="$HOME/.config/posh/posh.toml"
-if [[ ! -f "$_omp_cache" || "$_omp_config" -nt "$_omp_cache" ]]; then
-    oh-my-posh init zsh --config "$_omp_config" > "$_omp_cache" 2>/dev/null
+_omp_bin="$(whence -p oh-my-posh)"
+if [[ -n "$_omp_bin" && -r "$_omp_config" ]]; then
+    if [[ ! -s "$_omp_cache" || "$_omp_config" -nt "$_omp_cache" || "$_omp_bin" -nt "$_omp_cache" ]]; then
+        _dotfiles_write_init_cache "$_omp_cache" "$_omp_bin" init zsh --config "$_omp_config" 2>/dev/null
+    fi
+    [[ -s "$_omp_cache" ]] && source "$_omp_cache"
 fi
-source "$_omp_cache"
 
 # Add in plugins
 zinit light zsh-users/zsh-syntax-highlighting
@@ -24,6 +41,11 @@ zinit light zsh-users/zsh-autosuggestions
 zinit light Aloxaf/fzf-tab
 
 zinit snippet OMZP::git
+
+# Register Docker's completion directory before initializing completions
+if [[ "$OSTYPE" == darwin* && -d "$HOME/.docker/completions" ]]; then
+    fpath=("$HOME/.docker/completions" $fpath)
+fi
 
 # Load completions (rebuild cache only once per day)
 autoload -U compinit
@@ -41,7 +63,6 @@ bindkey '^n' history-search-forward
 autoload -Uz edit-command-line
 zle -N edit-command-line
 bindkey '^x^e' edit-command-line
-export EDITOR=nvim
 
 bindkey '^u' undo
 
@@ -65,12 +86,8 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 # Aliases
 alias ls='ls --color'
 alias c='clear'
-alias r='rm -rf'
-alias n='nvim'
-#alias t='tmux'
 alias cc='claude --dangerously-skip-permissions'
 alias ccr='claude --dangerously-skip-permissions --resume'
-
 
 # Lazy-load nvm: defers 530ms+ startup cost until first use
 export NVM_DIR="$HOME/dotfiles/.config/nvm"
@@ -99,7 +116,6 @@ npx() {
 BUN_INSTALL="$HOME/.bun"
 export PATH=$BUN_INSTALL/bin:$PATH
 
-
 export ANDROID_HOME=$HOME/android_sdk
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:$HOME/android_sdk/cmdline-tools/bin
@@ -109,11 +125,6 @@ if [[ "$(uname)" == "Darwin" ]]; then
     export ANDROID_HOME=$HOME/Library/Android/sdk
     export PATH=$ANDROID_HOME/emulator:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH
 
-    # Turso
-    export PATH="$HOME/.turso:$PATH"
-
-    # Docker CLI completions
-    fpath=($HOME/.docker/completions $fpath)
     export DYLD_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_LIBRARY_PATH
     export LIBRARY_PATH=/opt/homebrew/lib:$LIBRARY_PATH
     export PKG_CONFIG_PATH=/opt/homebrew/lib/pkgconfig:$PKG_CONFIG_PATH
@@ -126,40 +137,34 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # zoxide + fzf: cache init scripts, regenerate when binaries update
 _cache_dir="$HOME/.cache/zsh"
-[[ -d "$_cache_dir" ]] || mkdir -p "$_cache_dir"
 
 _zoxide_bin="$(whence -p zoxide)"
-if [[ ! -f "$_cache_dir/zoxide.zsh" || "$_zoxide_bin" -nt "$_cache_dir/zoxide.zsh" ]]; then
-    zoxide init --cmd cd zsh > "$_cache_dir/zoxide.zsh"
+if [[ -n "$_zoxide_bin" ]]; then
+    if [[ ! -s "$_cache_dir/zoxide.zsh" || "$_zoxide_bin" -nt "$_cache_dir/zoxide.zsh" ]]; then
+        _dotfiles_write_init_cache "$_cache_dir/zoxide.zsh" "$_zoxide_bin" init --cmd cd zsh
+    fi
+    [[ -s "$_cache_dir/zoxide.zsh" ]] && source "$_cache_dir/zoxide.zsh"
 fi
-source "$_cache_dir/zoxide.zsh"
 
 _fzf_bin="$(whence -p fzf)"
-if [[ ! -f "$_cache_dir/fzf.zsh" || "$_fzf_bin" -nt "$_cache_dir/fzf.zsh" ]]; then
-    fzf --zsh > "$_cache_dir/fzf.zsh"
+if [[ -n "$_fzf_bin" ]]; then
+    if [[ ! -s "$_cache_dir/fzf.zsh" || "$_fzf_bin" -nt "$_cache_dir/fzf.zsh" ]]; then
+        _dotfiles_write_init_cache "$_cache_dir/fzf.zsh" "$_fzf_bin" --zsh
+    fi
+    [[ -s "$_cache_dir/fzf.zsh" ]] && source "$_cache_dir/fzf.zsh"
 fi
-source "$_cache_dir/fzf.zsh"
+unfunction _dotfiles_write_init_cache
 
 bindkey '^I' autosuggest-accept
 
 export XDG_CONFIG_HOME="$HOME/dotfiles/.config"
 
-# Pyenv — lazy-loaded (no versions currently installed)
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-pyenv() {
-    unfunction pyenv 2>/dev/null
-    eval "$(command pyenv init --path)"
-    eval "$(command pyenv init -)"
-    pyenv "$@"
-}
-
 export OPENCODE_CONFIG_DIR=/Users/andrei.antonescu/.config/opencode/
-
-# Load Angular CLI autocompletion.
-#source <(ng completion script)
-
-. "$HOME/.posthog/env"
 
 # Nebius CLI (inlined)
 export PATH="$HOME/.nebius/bin:$PATH"
+
+# Machine-local settings and private exports, kept out of Git
+if [[ -r "$HOME/dotfiles/.zshrc.local" ]]; then
+    source "$HOME/dotfiles/.zshrc.local"
+fi
